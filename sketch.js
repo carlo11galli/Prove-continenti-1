@@ -20,6 +20,10 @@ let activeContinent = "Europe";
 let timeSelector; // selezione fasce temporali
 let activeRange = null; // indice della fascia selezionata (null=tutte)
 
+let arrowSize = 25;
+let arrowY;
+
+
 // variabili colori
 let colBackground;
 let colBaseLine;
@@ -66,15 +70,18 @@ function setup() {
   angleMode(RADIANS);
   textFont("Helvetica");
 
+  baseRadius = min(width, height) * 0.10;
+  maxRadius  = min(width, height) * 0.75;
+
   // posizione semicirconferenza (centro dell'arco in basso)
   centerY = height * 0.90;
 
   // --- COLORI ---
-  colBackground       = color(10);            
-  colBaseLine         = color(80);       
-  colCircleLines      = color(80);      
-  colCircleText       = color(255, 43, 0);           
-  colDots             = color(80);           
+  colBackground       = color(0);            
+  colBaseLine         = color(255);       
+  colCircleLines      = color(200);      
+  colCircleText       = color(255);           
+  colDots             = color(200);           
   colDotHover         = color(255, 43, 0);  
   colTooltipBg        = color(210, 50);       
   colTooltipText      = color(255, 43, 0);           
@@ -126,6 +133,8 @@ function setup() {
     else activeRange = int(v);
     computeEruptions();
   });
+
+  arrowY = height - 40; // posizione verticale delle frecce
 
   computeEruptions(); // per calcolare le posizioni iniziali
 }
@@ -220,7 +229,7 @@ function draw() {
 
   // linea di base
   stroke(colBaseLine);
-  strokeWeight(2);
+  strokeWeight(1);
   line(width/2 - maxRadius, centerY, width/2 + maxRadius, centerY);
 
   // disegna cerchi e etichette temporali
@@ -268,7 +277,38 @@ function draw() {
   fill(colTitle);
   textSize(26);
   textAlign(LEFT, TOP);
-  text("Volcanic Eruptions – " + activeContinent, 30, 30);
+  text("Volcanic Eruptions", 30, 30);
+  push();
+    textAlign(CENTER);
+    text(activeContinent, width / 2, height * 0.925 );
+  pop();
+
+  drawArrows();
+
+  function drawArrows() {
+    let leftX  = width / 2 - 100;
+    let rightX = width / 2 + 100;
+
+    noStroke();
+
+    // freccia sinistra
+    if (isMouseOverArrow(leftX, arrowY, arrowSize)) {
+      fill(255, 43, 0);
+    } else {
+      fill(200);
+    }
+    drawLeftArrow(leftX, arrowY, arrowSize);
+
+    // freccia destra
+    if (isMouseOverArrow(rightX, arrowY, arrowSize)) {
+      fill(255, 43, 0);
+    } else {
+      fill(200);
+    }
+    drawRightArrow(rightX, arrowY, arrowSize);
+  }
+
+
 }
 
 // disegna tutti i cerchi e mappa i pallini
@@ -290,7 +330,7 @@ function drawTimeCircles() {
 function drawCircle(radius, yearLabel) {
   noFill();
   stroke(colCircleLines);
-  strokeWeight(3);
+  strokeWeight(1);
   arc(width / 2, centerY, radius * 2, radius * 2, PI, TWO_PI);
 
   noStroke();
@@ -299,4 +339,55 @@ function drawCircle(radius, yearLabel) {
   textAlign(CENTER, BOTTOM);
   let txt = (yearLabel < 0 ? `${-yearLabel} BC` : `${yearLabel} AD`);
   text(txt, width / 2, centerY - radius - 10);
+}
+
+// --- FUNZIONI PER LE FRECCE ---
+function drawLeftArrow(x, y, size) {
+  textAlign(CENTER, CENTER);
+  textSize(size);
+  text("<", x, y - 10);
+}
+
+function drawRightArrow(x, y, size) {
+  textAlign(CENTER, CENTER);
+  textSize(size);
+  text(">", x, y - 10);
+}
+
+function mousePressed() {
+  let leftX  = width / 2 - 100;
+  let rightX = width / 2 + 100;
+
+  if (isMouseOverArrow(leftX, arrowY, arrowSize)) {
+    prevContinent();
+  }
+
+  if (isMouseOverArrow(rightX, arrowY, arrowSize)) {
+    nextContinent();
+  }
+}
+
+function nextContinent() {
+  let i = continents.indexOf(activeContinent);
+  i = (i + 1) % continents.length;
+  activeContinent = continents[i];
+  continentSelector.value(activeContinent);
+  computeEruptions();
+}
+
+function prevContinent() {
+  let i = continents.indexOf(activeContinent);
+  i = (i - 1 + continents.length) % continents.length;
+  activeContinent = continents[i];
+  continentSelector.value(activeContinent);
+  computeEruptions();
+}
+
+function isMouseOverArrow(x, y, s) {
+  return (
+    mouseX > x - s/2 &&
+    mouseX < x + s/2 &&
+    mouseY > y - 10 - s/2 &&
+    mouseY < y - 10 + s/2
+  );
 }
